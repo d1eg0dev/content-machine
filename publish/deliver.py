@@ -3,9 +3,11 @@ Delivery: email notification through Inkbox (and, once the Google API project ha
 passed the YouTube audit, automatic upload to YouTube).
 
 Env vars (GitHub Secrets):
-    INKBOX_API_KEY   your Inkbox API key
-    INKBOX_FROM      the Inkbox mailbox that sends the email (e.g. my-agent@inkbox.ai)
-    NOTIFY_TO        where you want to receive it (your personal email)
+    INKBOX_API_KEY      Inkbox API key (identity key of your agent, e.g. edmond-claude)
+    NOTIFY_PHONE        your mobile in E.164 (+34600111222): the agent messages you (iMessage/SMS)
+    INKBOX_IDENTITY_ID  only needed if INKBOX_API_KEY is an admin key: the agent identity UUID
+    INKBOX_FROM         optional: agent mailbox for the email copy (edmond-claude@inkboxmail.com)
+    NOTIFY_TO           optional: where to receive the email copy (your personal email)
     YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN  -> only when upload_mode = "youtube"
 """
 from __future__ import annotations
@@ -19,6 +21,7 @@ import urllib.request
 from pathlib import Path
 
 INKBOX_URL = "https://inkbox.ai/api/v1/mail/mailboxes/{mailbox}/messages"
+IMESSAGE_URL = "https://inkbox.ai/api/v1/imessage/messages"
 
 
 def run_url():
@@ -71,12 +74,47 @@ def send_inkbox(subject, text, body_html, attachments=None):
     print(f"[deliver] email sent to {to} ({resp.status})")
 
 
+def phone_text(manifest: dict, uploaded: dict | None):
+    kind = "Vídeo largo + 2 Shorts" if "long" in manifest else "2 Shorts"
+    lines = [f"🎬 Listo para subir ({kind})", manifest["title"], f"💡 {manifest.get('hook', '')}"]
+    if uploaded:
+        lines += [f"https://youtu.be/{v}" for v in uploaded.values()]
+    elif run_url():
+        lines.append(f"⬇️ Descarga (Artifacts, abajo del todo): {run_url()}")
+    if "long" in manifest:
+        lines += ["", "Título:", manifest["long"]["title"]]
+    for s in manifest.get("shorts", []):
+        lines += ["", f"Short {s['file'][6]}:", s["title"]]
+    lines += ["", "Descripciones y tags: UPLOAD.md dentro de la descarga."]
+    return "\n".join(lines)
+
+
+def send_imessage(text):
+    key, phone = os.environ.get("INKBOX_API_KEY"), os.environ.get("NOTIFY_PHONE")
+    if not (key and phone):
+        print("[deliver] phone message not configured (INKBOX_API_KEY / NOTIFY_PHONE), skipping")
+        return
+    url = IMESSAGE_URL
+    if os.environ.get("INKBOX_IDENTITY_ID"):
+        url += "?agent_identity_id=" + urllib.parse.quote(os.environ["INKBOX_IDENTITY_ID"])
+    req = urllib.request.Request(url, data=json.dumps({"to": phone.strip(), "text": text[:18000]}).encode(),
+                                 headers={"X-API-Key": key, "Content-Type": "application/json"})
+    resp = json.loads(urllib.request.urlopen(req, timeout=60).read())
+    msg = resp.get("message", resp)
+    print(f"[deliver] message to {phone}: {msg.get('status', 'sent')}")
+
+
 def deliver(out: Path, manifest: dict, config: dict):
     uploaded = None
     if config.get("upload_mode") == "youtube":
         from publish import youtube_upload
         uploaded = youtube_upload.upload_all(out, manifest, config)
         (out / "uploaded.json").write_text(json.dumps(uploaded, indent=2))
+    try:
+        send_imessage(phone_text(manifest, uploaded))
+    except Exception as e:  # never fail the run because of a notification
+        body = getattr(e, "read", lambda: b"")()
+        print(f"[deliver] phone message failed: {e} {body[:300]!r}")
     try:
         subject, text, body_html = build_email(manifest, uploaded)
         atts = []
@@ -86,4 +124,5 @@ def deliver(out: Path, manifest: dict, config: dict):
                          "content_base64": base64.b64encode(thumb.read_bytes()).decode()})
         send_inkbox(subject, text, body_html, atts)
     except Exception as e:  # never fail the run because of a notification
-        print(f"[deliver] email failed: {e}")
+        body = getattr(e, "read", lambda: b"")()
+        print(f"[deliver] email failed: {e} {body[:300]!r}")

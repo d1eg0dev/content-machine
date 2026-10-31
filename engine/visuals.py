@@ -94,6 +94,34 @@ def procedural_landscape(palette, w=2400, h=1350, seed=0):
     return out.filter(ImageFilter.GaussianBlur(1.2))
 
 
+def unsplash_image(query, seed=0):
+    """Unsplash: free commercial use. API guidelines: credit photographer + Unsplash, trigger download."""
+    key = os.environ.get("UNSPLASH_ACCESS_KEY")
+    if not key or not query:
+        return None, None
+    try:
+        hdr = {"Authorization": f"Client-ID {key}", "Accept-Version": "v1", "User-Agent": "content-machine"}
+        url = "https://api.unsplash.com/search/photos?" + urllib.parse.urlencode(
+            {"query": query, "orientation": "landscape", "per_page": 20, "content_filter": "high"})
+        data = json.loads(urllib.request.urlopen(urllib.request.Request(url, headers=hdr), timeout=30).read())
+        photos = [p for p in data.get("results", []) if p.get("width", 0) >= 2400]
+        if not photos:
+            return None, None
+        p = random.Random(seed).choice(photos[:10])
+        # required by the API guidelines: register the download
+        urllib.request.urlopen(urllib.request.Request(p["links"]["download_location"], headers=hdr), timeout=30).read()
+        raw = urllib.request.urlopen(urllib.request.Request(p["urls"]["raw"] + "&w=2600&q=90&fm=jpg",
+                                                            headers={"User-Agent": "content-machine"}), timeout=60).read()
+        img = Image.open(io.BytesIO(raw)).convert("RGB")
+        utm = "?utm_source=eyes_of_diego&utm_medium=referral"
+        credit = (f"Photo by {p['user']['name']} on Unsplash: {p['user']['links']['html']}{utm} "
+                  f"(https://unsplash.com/{utm})")
+        return img, credit
+    except Exception as e:
+        print(f"[visuals] unsplash failed: {e}")
+        return None, None
+
+
 def pexels_image(query, seed=0):
     key = os.environ.get("PEXELS_API_KEY")
     if not key or not query:
@@ -122,9 +150,10 @@ def resolve_image(theme, seed=0):
     if v.get("photo") and (PHOTOS / v["photo"]).exists():
         img = ImageOps.exif_transpose(Image.open(PHOTOS / v["photo"])).convert("RGB")
         return img, "Photo: Diego (Eyes of Diego)", "owner"
-    img, credit = pexels_image(v.get("stock_query"), seed)
-    if img is not None:
-        return img, credit, "pexels"
+    for name, fn in (("unsplash", unsplash_image), ("pexels", pexels_image)):
+        img, credit = fn(v.get("stock_query"), seed)
+        if img is not None:
+            return img, credit, name
     return procedural_landscape(v.get("palette"), seed=seed), None, "procedural"
 
 
@@ -133,18 +162,34 @@ def cover(img, w, h):
     return ImageOps.fit(img, (w, h), Image.LANCZOS, centering=(0.5, 0.5))
 
 
-def grade(img, palette=None, darken=0.82, vignette=0.55):
-    """Gentle mood grade: slight darkening, tint toward the palette, vignette."""
-    a = np.asarray(img).astype(np.float32)
+def grade(img, palette=None, darken=0.9, vignette=0.5, strength=1.0, seed=0):
+    """Editorial "film" look: muted colours, lifted blacks, split-toning, halation, grain, vignette."""
+    a = np.asarray(img).astype(np.float32) / 255.0
+    k = strength
+    lum = (a @ np.array([0.2126, 0.7152, 0.0722], np.float32))[..., None]
+    a = a * (1 - 0.28 * k) + lum * 0.28 * k                       # mute saturation
+    a = a ** 1.06                                                  # a touch of density
+    a = 0.055 * k + a * (1 - 0.055 * k - 0.04 * k)                 # lifted blacks, softened whites
+    shadow_tone = np.array(hex_rgb(palette[0]) if palette else (24, 40, 52), np.float32) / 255.0
+    high_tone = np.array((255, 226, 190), np.float32) / 255.0      # warm highlights
+    lum = (a @ np.array([0.2126, 0.7152, 0.0722], np.float32))[..., None]
+    a = a + 0.10 * k * (1 - lum) ** 2 * (shadow_tone - 0.25)        # tint shadows
+    a = a * (1 - 0.10 * k * lum ** 2) + high_tone * 0.10 * k * lum ** 2
+    # halation: soft warm glow around bright areas
+    small = Image.fromarray((np.clip(a, 0, 1) * 255).astype(np.uint8)).resize(
+        (max(1, a.shape[1] // 8), max(1, a.shape[0] // 8)), Image.BILINEAR)
+    glow = np.asarray(small.filter(ImageFilter.GaussianBlur(6)).resize((a.shape[1], a.shape[0]), Image.BILINEAR),
+                      np.float32) / 255.0
+    glow = np.clip(glow - 0.6, 0, 1) * np.array((1.0, 0.75, 0.55), np.float32)
+    a = a + 0.35 * k * glow
     a *= darken
-    if palette:
-        tint = np.array(hex_rgb(palette[0]), np.float32)
-        a = a * 0.9 + tint * 0.1
     h, w = a.shape[:2]
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
     d = np.sqrt(((xx - w / 2) / (w / 2)) ** 2 + ((yy - h / 2) / (h / 2)) ** 2)
     a *= (1 - vignette * np.clip(d - 0.35, 0, 1) ** 1.5)[..., None]
-    return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
+    rng = np.random.default_rng(seed)
+    a += rng.normal(0, 0.018 * k, (h, w, 1)).astype(np.float32)    # luminance grain
+    return Image.fromarray((np.clip(a, 0, 1) * 255).astype(np.uint8))
 
 
 # ---------------------------------------------------------------- animation

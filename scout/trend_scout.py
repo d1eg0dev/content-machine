@@ -127,7 +127,7 @@ Return ONLY a JSON object, no markdown, with exactly these fields:
   "description": "150-250 word YouTube description, first line is a hook, mention the soundscape is original and generated from code, add 2-3 timestamps-free usage tips, end with 3-5 hashtags",
   "tags": ["10-15 tags"],
   "thumbnail_text": "2-4 words, uppercase-friendly",
-  "visual": {{"photo": "filename or null", "stock_query": "3-5 word photo search query", "palette": ["#hex", "#hex", "#hex"]}},
+  "visual": {{"photo": "filename or null", "stock_query": "2-4 word Unsplash search, editorial/moody film-photography feel, e.g. foggy pine forest, rainy window night, desert dusk", "palette": ["#hex", "#hex", "#hex"]}},
   "shorts": [{{"hook_text": "<= 8 words on-screen text", "title": "<= 70 chars incl. #shorts"}}, {{"hook_text": "...", "title": "..."}}],
   "music": {{
     "key": one of {keys},

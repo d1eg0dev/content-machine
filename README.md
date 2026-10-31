@@ -4,8 +4,8 @@ Una máquina de contenido que corre sola en la nube (GitHub Actions, gratis). Ca
 
 1. **Busca un trend.** Gemini, con búsqueda de Google, lee las tendencias del día, la temporada y los eventos próximos. Elige un concepto de ambiente que no repita nada de lo publicado.
 2. **Compone la música por código.** Pads, drones, cuencos tibetanos, campanas, lluvia, océano, viento, fuego, pájaros y beats binaurales. Sin samples, sin loops y sin modelos de música IA. Cada minuto es único.
-3. **Monta el vídeo.** Usa tu foto (o stock de Pexels, o un paisaje procedural) con zoom lento y partículas, en un loop sin cortes. Genera también la miniatura y 2 Shorts verticales.
-4. **Te avisa.** Te llega un email a través de Inkbox con el enlace de descarga, la miniatura, y el título, la descripción y los tags listos para copiar y pegar.
+3. **Monta el vídeo.** Usa tu foto (o una de Unsplash, o un paisaje generado por código) con un look de película estilo editorial, con zoom lento y partículas, en un loop sin cortes. Genera también la miniatura y 2 Shorts verticales.
+4. **Te avisa.** Tu agente de Inkbox te escribe al móvil con el título y el enlace de descarga. Opcionalmente, también te llega un email con descripciones y tags.
 
 | Día | Qué produce |
 |---|---|
@@ -29,14 +29,19 @@ Crea un repositorio nuevo, por ejemplo `content-machine`, y sube esta carpeta.
 
 Sin esta clave la máquina sigue funcionando con temas de temporada predefinidos, pero sin trends.
 
-### 3. Aviso por email (Inkbox)
-Crea estos tres secrets:
-- `INKBOX_API_KEY`: tu clave de Inkbox (https://inkbox.ai/console).
-- `INKBOX_FROM`: la dirección de tu buzón de Inkbox, que es la que envía el aviso.
-- `NOTIFY_TO`: tu email personal, donde lo quieres recibir. Puedes poner varios separados por comas.
+### 3. Aviso al móvil con tu agente de Inkbox (edmond-claude)
+Cada día, tu agente te manda un mensaje con el título, la idea y el enlace de descarga. Crea estos secrets:
+- `INKBOX_API_KEY`: la clave de API de tu agente. Está en https://inkbox.ai/console → API Keys.
+- `NOTIFY_PHONE`: tu móvil en formato internacional, sin espacios (por ejemplo `+34600111222`).
+- `INKBOX_IDENTITY_ID`: solo si tu clave es de tipo *admin*. Es el ID de la identidad de edmond-claude y lo encuentras en la consola. Si la clave es de la propia identidad, no hace falta.
+- Opcional, si quieres además una copia por email con descripciones y tags: `INKBOX_FROM` = `edmond-claude@inkboxmail.com` y `NOTIFY_TO` = tu email personal.
 
-### 4. Pexels (opcional, fotos de stock gratis)
-https://www.pexels.com/api/ → secret `PEXELS_API_KEY`. Se usa cuando ninguna foto tuya encaja con el tema.
+### 4. Unsplash (opcional pero recomendado: fotos gratis con estética muy cuidada)
+1. Entra en https://unsplash.com/developers, pulsa "Register as a developer" y luego **"New Application"**.
+2. Acepta las condiciones y ponle un nombre, por ejemplo "Eyes of Diego content".
+3. Copia la **Access Key** → secret `UNSPLASH_ACCESS_KEY`.
+
+Se usa cuando ninguna foto tuya encaja con el tema. El crédito al fotógrafo se añade solo a la descripción, como piden las normas de Unsplash. Si además tienes una clave de Pexels (`PEXELS_API_KEY`), queda como segunda opción.
 
 ### 5. Tus fotos (lo que más originalidad aporta)
 Mete tus fotos en `assets/photos/` con **nombres descriptivos**, porque el scout elige por el nombre:
@@ -48,16 +53,16 @@ bosque-pinos-lluvia-michoacan.jpg
 Conviene que sean horizontales y de al menos 2400 px de ancho. Cuantas más subas, más vídeos serán 100% tuyos.
 
 ### 6. Pruébalo
-Ve a **Actions → Daily content → Run workflow** y pon `long = true` y `minutes = 3`. En unos 5 minutos te llegará el email y el vídeo de prueba estará en la página de esa ejecución (sección *Artifacts*).
+Ve a **Actions → Daily content → Run workflow** y pon `long = true` y `minutes = 3`. En unos 5–8 minutos te llegará el mensaje y el vídeo de prueba estará en la página de esa ejecución (sección *Artifacts*).
 
 A partir de ahí se ejecuta solo todos los días a las 06:17 (hora de Madrid).
 
 ---
 
 ## Tu rutina diaria (10–15 min)
-1. Abre el email del día y pulsa **"Descargar los vídeos de hoy"**. Abajo del todo, en *Artifacts*, descarga el zip.
-2. **Vídeo largo** (4 días por semana): súbelo en YouTube Studio, pega el título, la descripción y los tags del email, pon la miniatura y prográmalo.
-3. **Shorts:** súbelos desde YouTube Studio o desde la app, con el título del email.
+1. Abre el mensaje de tu agente y pulsa el enlace. Abajo del todo, en *Artifacts*, descarga el zip. Dentro está `UPLOAD.md` con títulos, descripciones y tags.
+2. **Vídeo largo** (4 días por semana): súbelo en YouTube Studio, pega el título, la descripción y los tags, pon la miniatura y prográmalo.
+3. **Shorts:** súbelos desde YouTube Studio o desde la app.
 4. Contesta 2–3 comentarios. Eso cuenta como "aporte humano" y ayuda al algoritmo.
 
 ## ¿Por qué no se sube sola a YouTube (todavía)?
@@ -91,7 +96,7 @@ scout/trend_scout.py       Trends + Gemini → concepto del día (JSON)
 engine/music.py            Motor de música procedural (streaming, aguanta horas)
 engine/visuals.py          Imagen → loop animado, miniatura, Shorts
 pipeline/run_daily.py      Orquesta todo
-publish/deliver.py         Aviso por email (Inkbox) + subida a YouTube
+publish/deliver.py         Aviso al móvil/email (Inkbox) + subida a YouTube
 .github/workflows/daily.yml  El cron en la nube
 data/history.json          Memoria de lo publicado (para no repetir)
 ```

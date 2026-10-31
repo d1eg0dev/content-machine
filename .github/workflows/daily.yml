@@ -46,7 +46,10 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
           INKBOX_API_KEY: ${{ secrets.INKBOX_API_KEY }}
+          NOTIFY_PHONE: ${{ secrets.NOTIFY_PHONE }}
+          INKBOX_IDENTITY_ID: ${{ secrets.INKBOX_IDENTITY_ID }}
           INKBOX_FROM: ${{ secrets.INKBOX_FROM }}
           NOTIFY_TO: ${{ secrets.NOTIFY_TO }}
           YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}

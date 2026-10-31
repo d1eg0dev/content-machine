@@ -112,7 +112,7 @@ def run(date: dt.date, force_long=False, minutes=None, theme_path=None, deliver=
         visuals.audio_excerpt(short_src, excerpt, max(5, start), sec)
         cta = (CONFIG["short_cta_long"].replace("1-hour", f"{int(dur_min // 60)}-hour") if dur_min >= 60
                else CONFIG["short_cta_channel"]) if long_day else CONFIG["short_cta_channel"]
-        visuals.render_short(img, excerpt, str(out / f"short_{i}.mp4"), s.get("hook_text", ""), seconds=sec,
+        visuals.render_short(graded, excerpt, str(out / f"short_{i}.mp4"), s.get("hook_text", ""), seconds=sec,
                              seed=seed + i, cta=cta)
         Path(excerpt).unlink(missing_ok=True)
         desc = f"{theme['title']}\n\n{CONFIG['short_description']}"
