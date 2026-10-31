@@ -1,1 +1,24 @@
-[]
+[
+ {
+  "date": "2026-10-31",
+  "title": "Tibetan Singing Bowls by a Fire | 1 Hour Meditation Soundscape",
+  "long": true,
+  "music": {
+   "key": "E",
+   "mode": "pentatonic_minor",
+   "layers": {
+    "pad": 0,
+    "drone": 0.6,
+    "bowls": 0.5,
+    "bells": 0,
+    "brown": 0,
+    "rain": 0,
+    "ocean": 0,
+    "wind": 0,
+    "fire": 0.4,
+    "birds": 0,
+    "binaural": 0.0
+   }
+  }
+ }
+]
