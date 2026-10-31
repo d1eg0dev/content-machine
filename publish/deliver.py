@@ -1,18 +1,24 @@
 """
-Delivery: notify on Telegram (Shorts go straight to your phone) and, when the
-Google API project has passed the YouTube audit, upload to YouTube.
+Delivery: email notification through Inkbox (and, once the Google API project has
+passed the YouTube audit, automatic upload to YouTube).
 
 Env vars (GitHub Secrets):
-    TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID      -> notifications + Shorts to your phone
-    YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN -> YouTube upload (upload_mode = "youtube")
+    INKBOX_API_KEY   your Inkbox API key
+    INKBOX_FROM      the Inkbox mailbox that sends the email (e.g. my-agent@inkbox.ai)
+    NOTIFY_TO        where you want to receive it (your personal email)
+    YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN  -> only when upload_mode = "youtube"
 """
 from __future__ import annotations
 
+import base64
+import html
 import json
 import os
-import uuid
+import urllib.parse
 import urllib.request
 from pathlib import Path
+
+INKBOX_URL = "https://inkbox.ai/api/v1/mail/mailboxes/{mailbox}/messages"
 
 
 def run_url():
@@ -20,46 +26,50 @@ def run_url():
     return f"{s}/{r}/actions/runs/{i}" if s and r and i else None
 
 
-# ---------------------------------------------------------------- telegram
+def build_email(manifest: dict, uploaded: dict | None):
+    url = run_url()
+    kind = "Vídeo largo + Shorts" if "long" in manifest else "Shorts"
+    subject = f"🎬 Listo para subir ({kind}): {manifest['title']}"
+    t, h = [], []
 
-def _tg(method, fields, files=None):
-    token = os.environ["TELEGRAM_BOT_TOKEN"]
-    url = f"https://api.telegram.org/bot{token}/{method}"
-    boundary = uuid.uuid4().hex
-    body = b""
-    for k, v in fields.items():
-        body += f"--{boundary}\r\nContent-Disposition: form-data; name=\"{k}\"\r\n\r\n{v}\r\n".encode()
-    for k, path in (files or {}).items():
-        body += (f"--{boundary}\r\nContent-Disposition: form-data; name=\"{k}\"; filename=\"{Path(path).name}\"\r\n"
-                 f"Content-Type: application/octet-stream\r\n\r\n").encode() + Path(path).read_bytes() + b"\r\n"
-    body += f"--{boundary}--\r\n".encode()
-    req = urllib.request.Request(url, data=body, headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
-    return json.loads(urllib.request.urlopen(req, timeout=300).read())
+    def para(text, tag="p"):
+        t.append(text)
+        h.append(f"<{tag}>{html.escape(text).replace(chr(10), '<br>')}</{tag}>")
 
-
-def telegram(out: Path, manifest: dict, uploaded: dict | None):
-    if not (os.environ.get("TELEGRAM_BOT_TOKEN") and os.environ.get("TELEGRAM_CHAT_ID")):
-        print("[deliver] telegram not configured, skipping")
-        return
-    chat = os.environ["TELEGRAM_CHAT_ID"]
-    lines = [f"🎬 {manifest['date']}: {manifest['title']}", f"💡 {manifest.get('hook', '')}"]
+    para(f"Idea de hoy: {manifest.get('hook', '')}")
     if uploaded:
-        lines.append("✅ Uploaded as " + ", ".join(f"{k}: https://youtu.be/{v}" for k, v in uploaded.items()))
-    elif "long" in manifest:
-        url = run_url()
-        lines.append("📦 Long video ready to download" + (f": {url}" if url else ""))
-        lines.append("Title, description and tags are in UPLOAD.md inside the artifact.")
-    _tg("sendMessage", {"chat_id": chat, "text": "\n".join(lines)})
-    if (out / "thumbnail.jpg").exists():
-        _tg("sendPhoto", {"chat_id": chat, "caption": "Thumbnail"}, {"photo": str(out / "thumbnail.jpg")})
+        para("Ya subido a YouTube:\n" + "\n".join(f"{k}: https://youtu.be/{v}" for k, v in uploaded.items()))
+    elif url:
+        t.append(f"Descarga los archivos (sección 'Artifacts', abajo del todo): {url}")
+        h.append(f'<p><a href="{url}"><b>⬇️ Descargar los vídeos de hoy</b></a> (sección "Artifacts", abajo del todo)</p>')
+
+    if "long" in manifest:
+        L = manifest["long"]
+        para("VÍDEO LARGO: long.mp4 + thumbnail.jpg", "h3")
+        para("Título:\n" + L["title"])
+        para("Descripción:\n" + L["description"])
+        para("Tags:\n" + ", ".join(L["tags"]))
     for s in manifest.get("shorts", []):
-        f = out / s["file"]
-        if f.exists() and f.stat().st_size < 49 * 1024 * 1024:
-            _tg("sendVideo", {"chat_id": chat, "caption": f"{s['title']}\n\n{s['description']}"[:1000],
-                              "supports_streaming": "true"}, {"video": str(f)})
+        para(f"SHORT: {s['file']}", "h3")
+        para("Título:\n" + s["title"])
+        para("Descripción:\n" + s["description"])
+    return subject, "\n\n".join(t), "\n".join(h)
 
 
-# ---------------------------------------------------------------- main
+def send_inkbox(subject, text, body_html, attachments=None):
+    key, sender, to = (os.environ.get(k) for k in ("INKBOX_API_KEY", "INKBOX_FROM", "NOTIFY_TO"))
+    if not (key and sender and to):
+        print("[deliver] Inkbox not configured (INKBOX_API_KEY / INKBOX_FROM / NOTIFY_TO), skipping")
+        return
+    body = {"recipients": {"to": [a.strip() for a in to.split(",")]}, "subject": subject[:990],
+            "body_text": text, "body_html": body_html, "attachments": attachments or []}
+    req = urllib.request.Request(INKBOX_URL.format(mailbox=urllib.parse.quote(sender)),
+                                 data=json.dumps(body).encode(),
+                                 headers={"X-API-Key": key, "Content-Type": "application/json",
+                                          "Idempotency-Key": subject[:200] + (os.environ.get("GITHUB_RUN_ID") or "")})
+    resp = urllib.request.urlopen(req, timeout=60)
+    print(f"[deliver] email sent to {to} ({resp.status})")
+
 
 def deliver(out: Path, manifest: dict, config: dict):
     uploaded = None
@@ -68,6 +78,12 @@ def deliver(out: Path, manifest: dict, config: dict):
         uploaded = youtube_upload.upload_all(out, manifest, config)
         (out / "uploaded.json").write_text(json.dumps(uploaded, indent=2))
     try:
-        telegram(out, manifest, uploaded)
+        subject, text, body_html = build_email(manifest, uploaded)
+        atts = []
+        thumb = out / "thumbnail.jpg"
+        if thumb.exists():
+            atts.append({"filename": "thumbnail.jpg", "content_type": "image/jpeg",
+                         "content_base64": base64.b64encode(thumb.read_bytes()).decode()})
+        send_inkbox(subject, text, body_html, atts)
     except Exception as e:  # never fail the run because of a notification
-        print(f"[deliver] telegram failed: {e}")
+        print(f"[deliver] email failed: {e}")
