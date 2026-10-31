@@ -124,6 +124,19 @@ def unsplash_image(query, seed=0):
 
 
 def openverse_image(query, seed=0):
+    """Try the full query, then shorter versions (Openverse search is literal)."""
+    if not query:
+        return None, None
+    words = query.split()
+    tries = list(dict.fromkeys([" ".join(words), " ".join(words[-2:]), " ".join(words[:2]), words[-1]]))
+    for q in tries:
+        img, credit = _openverse_query(q, seed)
+        if img is not None:
+            return img, credit
+    return None, None
+
+
+def _openverse_query(query, seed=0):
     """Openverse (openverse.org): openly licensed images, no API key needed.
     Public domain (CC0/PDM) first; CC BY only with attribution in the description."""
     if not query:
