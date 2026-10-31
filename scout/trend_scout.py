@@ -174,8 +174,11 @@ def ask_gemini(prompt, api_key, model, search=True):
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
         "generationConfig": {"temperature": 1.0},
     }
+    body["generationConfig"]["maxOutputTokens"] = 8192
     if search:
         body["tools"] = [{"google_search": {}}]
+    else:
+        body["generationConfig"]["responseMimeType"] = "application/json"  # structured output (not allowed with tools)
     url = GEMINI_URL.format(model=model)
     req = urllib.request.Request(url, data=json.dumps(body).encode(),
                                  headers={"Content-Type": "application/json", "x-goog-api-key": api_key})
@@ -184,8 +187,12 @@ def ask_gemini(prompt, api_key, model, search=True):
     except urllib.error.HTTPError as e:
         detail = e.read().decode(errors="replace")[:3000]
         raise RuntimeError(f"Gemini HTTP {e.code}: {detail}") from None
-    parts = resp["candidates"][0]["content"]["parts"]
-    text = "".join(p.get("text", "") for p in parts)
+    cand = (resp.get("candidates") or [{}])[0]
+    parts = cand.get("content", {}).get("parts", [])
+    text = "".join(p.get("text", "") for p in parts if not p.get("thought"))
+    if "{" not in text:
+        raise ValueError(f"no JSON in model output (finishReason={cand.get('finishReason')}, "
+                         f"parts={len(parts)}, text={text[:120]!r}, feedback={resp.get('promptFeedback')})")
     sources = []
     gm = resp["candidates"][0].get("groundingMetadata", {})
     for ch in gm.get("groundingChunks", [])[:8]:
@@ -321,7 +328,8 @@ def scout(today=None, geo="US", model=None, attempts=3):
                            photos=json.dumps(photos) if photos else "(none)",
                            keys=KEYS, modes=MODES, layers=LAYERS)
     errors = []
-    plan = [(m, True) for m in models] + [(m, False) for m in models[:3]]   # last resort: no search grounding
+    # grounding first on the top 2 models; then every model without grounding (Trends RSS still gives fresh context)
+    plan = [(m, True) for m in models[:2]] + [(m, False) for m in models]
     dup_retries = 0
     i = 0
     while i < len(plan):
