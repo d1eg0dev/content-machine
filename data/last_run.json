@@ -1,18 +1,18 @@
 {
  "date": "2026-10-31",
- "title": "Candlelit Altar Night | 1 Hour Día de Muertos Deep Sleep Ambient",
+ "title": "Candlelight in Oaxaca | Día de Muertos Night Sleep Ambient (1 Hour)",
  "scout": "ok: gemini-3.5-flash (no search grounding), 10 trends read",
  "visual_source": "procedural",
  "long": true,
- "render_seconds": 300,
+ "render_seconds": 325,
  "delivery": {
-  "phone": "skipped: INKBOX_API_KEY or NOTIFY_PHONE missing",
+  "phone": "failed: HTTP Error 400: Bad Request {\"detail\":\"agent_identity_id is required when sending by recipient\",\"agent_support\":\"If you cannot resolve this issue from the error detail, contact the Inkbox Support Agent over A2A using its Agent Card: https://inkbox.ai/a2a/support/card. Starting a conversation requires an active agent-scoped API",
   "email": "skipped: INKBOX_FROM or NOTIFY_TO missing"
  },
  "secrets_present": {
   "GEMINI_API_KEY": true,
   "INKBOX_API_KEY": true,
-  "NOTIFY_PHONE": false,
+  "NOTIFY_PHONE": true,
   "INKBOX_IDENTITY_ID": false,
   "INKBOX_FROM": false,
   "NOTIFY_TO": false,

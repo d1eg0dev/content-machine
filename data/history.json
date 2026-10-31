@@ -1,1 +1,24 @@
-[]
+[
+ {
+  "date": "2026-10-31",
+  "title": "Candlelight in Oaxaca | Día de Muertos Night Sleep Ambient (1 Hour)",
+  "long": true,
+  "music": {
+   "key": "F",
+   "mode": "aeolian",
+   "layers": {
+    "pad": 0.75,
+    "drone": 0.5,
+    "bowls": 0,
+    "bells": 0.2,
+    "brown": 0.15,
+    "rain": 0,
+    "ocean": 0,
+    "wind": 0.25,
+    "fire": 0.35,
+    "birds": 0,
+    "binaural": 0.0
+   }
+  }
+ }
+]
