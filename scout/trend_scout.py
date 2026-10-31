@@ -149,19 +149,40 @@ festive = lydian/ionian, bells. Only use binaural if the title says headphones.
 """
 
 
-def ask_gemini(prompt, api_key, model):
+def list_models(api_key):
+    """Text models this key can call with generateContent, best first."""
+    try:
+        req = urllib.request.Request("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200",
+                                     headers={"x-goog-api-key": api_key})
+        data = json.loads(urllib.request.urlopen(req, timeout=30).read())
+    except Exception as e:
+        print(f"[scout] could not list models: {e}", file=sys.stderr)
+        return []
+    names = [m["name"].split("/", 1)[1] for m in data.get("models", [])
+             if "generateContent" in m.get("supportedGenerationMethods", [])]
+    bad = ("image", "tts", "audio", "live", "embedding", "vision", "robotics", "thinking-exp", "learnlm", "gemma")
+    names = [n for n in names if "gemini" in n and not any(b in n for b in bad)]
+
+    def rank(n):
+        return (0 if "flash" in n and "lite" not in n else 1 if "flash-lite" in n else 2,
+                1 if ("preview" in n or "exp" in n) else 0, n.count("-"), n)
+    return sorted(names, key=rank)
+
+
+def ask_gemini(prompt, api_key, model, search=True):
     body = {
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-        "tools": [{"google_search": {}}],
         "generationConfig": {"temperature": 1.0},
     }
+    if search:
+        body["tools"] = [{"google_search": {}}]
     url = GEMINI_URL.format(model=model)
     req = urllib.request.Request(url, data=json.dumps(body).encode(),
                                  headers={"Content-Type": "application/json", "x-goog-api-key": api_key})
     try:
         resp = json.loads(urllib.request.urlopen(req, timeout=120).read())
     except urllib.error.HTTPError as e:
-        detail = e.read().decode(errors="replace")[:400]
+        detail = e.read().decode(errors="replace")[:3000]
         raise RuntimeError(f"Gemini HTTP {e.code}: {detail}") from None
     parts = resp["candidates"][0]["content"]["parts"]
     text = "".join(p.get("text", "") for p in parts)
@@ -286,15 +307,11 @@ def scout(today=None, geo="US", model=None, attempts=3):
     history = load_history()
     photos = list_photos()
     key = os.environ.get("GEMINI_API_KEY")
-    # empty GitHub variables arrive as "", so treat blank as unset; fall back across models
-    models = [m for m in [model, (os.environ.get("GEMINI_MODEL") or "").strip(),
-                          "gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-flash-lite"] if m]
-    models = list(dict.fromkeys(models))
-    if not key:
-        print("[scout] no GEMINI_API_KEY, using offline seasonal theme", file=sys.stderr)
-        t = sanitize(offline_theme(cal, history), photos)
-        t["scout_status"] = "fallback: GEMINI_API_KEY missing"
-        return t
+    # empty GitHub variables arrive as "", so treat blank as unset
+    preferred = [m for m in [model, (os.environ.get("GEMINI_MODEL") or "").strip()] if m]
+    available = list_models(key)
+    models = list(dict.fromkeys(preferred + available[:6] + ["gemini-flash-latest", "gemini-2.5-flash"]))
+    print(f"[scout] models to try: {models}", file=sys.stderr)
 
     trends = fetch_trends(geo)
     trend_txt = "\n".join(f"- {t['query']} ({t['traffic']}): {' / '.join(t['news'])}" for t in trends) or "(unavailable)"
@@ -303,26 +320,35 @@ def scout(today=None, geo="US", model=None, attempts=3):
     prompt = PROMPT.format(calendar=json.dumps(cal), trends=trend_txt, history=hist_txt,
                            photos=json.dumps(photos) if photos else "(none)",
                            keys=KEYS, modes=MODES, layers=LAYERS)
-    last_err = None
-    for i in range(attempts + len(models) - 1):
-        model = models[0]
+    errors = []
+    plan = [(m, True) for m in models] + [(m, False) for m in models[:3]]   # last resort: no search grounding
+    dup_retries = 0
+    i = 0
+    while i < len(plan):
+        model, search = plan[i]
         try:
-            text, sources = ask_gemini(prompt, key, model)
+            text, sources = ask_gemini(prompt, key, model, search)
             theme = sanitize(extract_json(text), photos)
             dup = too_similar(theme, history)
-            if dup:
+            if dup and dup_retries < 2:
+                dup_retries += 1
                 prompt += f"\n\nYour previous idea '{theme['title']}' is too close to '{dup}'. Pick something different."
-                last_err = f"duplicate of {dup}"
                 continue
             theme["sources"] = sources
-            theme["scout_status"] = f"ok: gemini ({model}), {len(trends)} trends read"
             theme["trends_seen"] = [t["query"] for t in trends[:10]]
+            theme["scout_status"] = (f"ok: {model}{'' if search else ' (no search grounding)'}, "
+                                     f"{len(trends)} trends read")
             return theme
         except Exception as e:
-            last_err = f"{model}: " + str(e).replace(key, "***")
-            print(f"[scout] attempt {i+1} failed: {last_err}", file=sys.stderr)
-            if "HTTP 404" in str(e) and len(models) > 1:   # model retired/unknown -> try the next one
-                models.pop(0)
+            msg = str(e).replace(key, "***")
+            short = re.sub(r"\s+", " ", msg)[:120]
+            q = re.findall(r'"(quotaId|quotaValue)":\s*"([^"]+)"', msg)
+            if q:
+                short += " [" + ", ".join(f"{k}={v}" for k, v in q[:4]) + "]"
+            errors.append(f"{model}{'' if search else '/nosearch'}: {short}")
+            print(f"[scout] {errors[-1]}", file=sys.stderr)
+            i += 1
+    last_err = " || ".join(errors[-6:]) + f" | available: {available[:8]}"
     print(f"[scout] falling back to offline theme ({last_err})", file=sys.stderr)
     t = sanitize(offline_theme(cal, history), photos)
     t["scout_status"] = f"fallback: {last_err} | trends read: {len(trends)}"
