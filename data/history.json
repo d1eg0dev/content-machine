@@ -42,5 +42,27 @@
     "binaural": 0.0
    }
   }
+ },
+ {
+  "date": "2026-10-31",
+  "title": "Ocean Waves Under the Stars | 1 Hour Deep Sleep Ambient",
+  "long": true,
+  "music": {
+   "key": "E",
+   "mode": "pentatonic_major",
+   "layers": {
+    "pad": 0.7,
+    "drone": 0.5,
+    "bowls": 0,
+    "bells": 0,
+    "brown": 0,
+    "rain": 0,
+    "ocean": 0.6,
+    "wind": 0,
+    "fire": 0,
+    "birds": 0,
+    "binaural": 0.0
+   }
+  }
  }
 ]

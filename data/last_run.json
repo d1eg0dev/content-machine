@@ -1,10 +1,10 @@
 {
  "date": "2026-10-31",
- "title": "Misty Pine Forest at Dawn | 1 Hour Calm Focus Ambient",
- "scout": "fallback: Gemini HTTP 404:  | trends read: 10",
+ "title": "Ocean Waves Under the Stars | 1 Hour Deep Sleep Ambient",
+ "scout": "fallback: gemini-flash-latest: Gemini HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \",\n    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/google.rpc | trends read: 10",
  "visual_source": "procedural",
  "long": true,
- "render_seconds": 159,
+ "render_seconds": 204,
  "delivery": {
   "phone": "skipped: INKBOX_API_KEY or NOTIFY_PHONE missing",
   "email": "skipped: INKBOX_FROM or NOTIFY_TO missing"
