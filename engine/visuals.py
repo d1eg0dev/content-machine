@@ -122,6 +122,37 @@ def unsplash_image(query, seed=0):
         return None, None
 
 
+def openverse_image(query, seed=0):
+    """Openverse (openverse.org): openly licensed images, no API key needed.
+    Public domain (CC0/PDM) first; CC BY only with attribution in the description."""
+    if not query:
+        return None, None
+    hdr = {"User-Agent": "eyes-of-diego-content-machine/1.0 (github.com/d1eg0dev/content-machine)"}
+    for licenses in ("cc0,pdm", "by"):
+        try:
+            url = "https://api.openverse.org/v1/images/?" + urllib.parse.urlencode(
+                {"q": query, "license": licenses, "size": "large", "aspect_ratio": "wide",
+                 "mature": "false", "page_size": 30})
+            data = json.loads(urllib.request.urlopen(urllib.request.Request(url, headers=hdr), timeout=30).read())
+            res = [r for r in data.get("results", []) if (r.get("width") or 0) >= 1920 and r.get("url")]
+            random.Random(seed).shuffle(res)
+            for r in res[:6]:
+                try:
+                    raw = urllib.request.urlopen(urllib.request.Request(r["url"], headers=hdr), timeout=60).read()
+                    img = Image.open(io.BytesIO(raw)).convert("RGB")
+                    if img.width < 1600:
+                        continue
+                    credit = r.get("attribution") or (f"\"{r.get('title')}\" by {r.get('creator')} "
+                                                       f"({r.get('license')} {r.get('license_version')})")
+                    credit = f"Background: {credit} {r.get('foreign_landing_url') or ''} via Openverse".strip()
+                    return img, credit
+                except Exception:
+                    continue
+        except Exception as e:
+            print(f"[visuals] openverse failed: {e}")
+    return None, None
+
+
 def pexels_image(query, seed=0):
     key = os.environ.get("PEXELS_API_KEY")
     if not key or not query:
@@ -150,7 +181,7 @@ def resolve_image(theme, seed=0):
     if v.get("photo") and (PHOTOS / v["photo"]).exists():
         img = ImageOps.exif_transpose(Image.open(PHOTOS / v["photo"])).convert("RGB")
         return img, "Photo: Diego (Eyes of Diego)", "owner"
-    for name, fn in (("unsplash", unsplash_image), ("pexels", pexels_image)):
+    for name, fn in (("unsplash", unsplash_image), ("pexels", pexels_image), ("openverse", openverse_image)):
         img, credit = fn(v.get("stock_query"), seed)
         if img is not None:
             return img, credit, name
