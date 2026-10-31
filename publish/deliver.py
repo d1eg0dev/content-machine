@@ -90,20 +90,49 @@ def phone_text(manifest: dict, uploaded: dict | None):
     return "\n".join(lines)
 
 
+AGENT_DEFAULT = "edmond-claude@inkboxmail.com"
+
+
+def inkbox_identity(key):
+    """Find the agent identity (by INKBOX_AGENT email/handle, default edmond-claude). Admin keys need its id."""
+    want = (os.environ.get("INKBOX_AGENT") or AGENT_DEFAULT).strip().lower()
+    req = urllib.request.Request("https://inkbox.ai/api/v1/identities", headers={"X-API-Key": key})
+    ids = json.loads(urllib.request.urlopen(req, timeout=30).read())
+    if isinstance(ids, dict):
+        ids = ids.get("items") or ids.get("identities") or ids.get("data") or []
+    for i in ids:
+        email = (i.get("email_address") or (i.get("mailbox") or {}).get("email_address") or "").lower()
+        if want in (email, (i.get("agent_handle") or "").lower()) or email.split("@")[0] == want.split("@")[0]:
+            return i
+    return ids[0] if len(ids) == 1 else None
+
+
 def send_imessage(text):
     key, phone = os.environ.get("INKBOX_API_KEY"), os.environ.get("NOTIFY_PHONE")
     if not (key and phone):
         print("[deliver] phone message not configured (INKBOX_API_KEY / NOTIFY_PHONE), skipping")
         return "skipped: INKBOX_API_KEY or NOTIFY_PHONE missing"
     url = IMESSAGE_URL
-    if os.environ.get("INKBOX_IDENTITY_ID"):
-        url += "?agent_identity_id=" + urllib.parse.quote(os.environ["INKBOX_IDENTITY_ID"])
+    ident_id = os.environ.get("INKBOX_IDENTITY_ID")
+    info = ""
+    if not ident_id:
+        try:
+            ident = inkbox_identity(key)
+            if ident:
+                ident_id = ident["id"]
+                info = (f" via {ident.get('agent_handle')} (imessage={bool(ident.get('imessage_number'))}, "
+                        f"phone={bool(ident.get('phone_number'))})")
+                os.environ.setdefault("INKBOX_FROM", ident.get("email_address") or "")
+        except Exception as e:
+            info = f" (identity lookup failed: {e})"
+    if ident_id:
+        url += "?agent_identity_id=" + urllib.parse.quote(ident_id)
     req = urllib.request.Request(url, data=json.dumps({"to": phone.strip(), "text": text[:18000]}).encode(),
                                  headers={"X-API-Key": key, "Content-Type": "application/json"})
     resp = json.loads(urllib.request.urlopen(req, timeout=60).read())
     msg = resp.get("message", resp)
-    print(f"[deliver] message to {phone}: {msg.get('status', 'sent')}")
-    return f"ok: {msg.get('status', 'sent')}"
+    print(f"[deliver] message to {phone}: {msg.get('status', 'sent')}{info}")
+    return f"ok: {msg.get('status', 'sent')}{info}"
 
 
 def deliver(out: Path, manifest: dict, config: dict):

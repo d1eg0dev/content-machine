@@ -29,6 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PHOTOS = ROOT / "assets" / "photos"
 FONTS = ROOT / "assets" / "fonts"
 FPS = 24
+DIAG = []  # image-source diagnostics, copied into data/last_run.json
 
 
 # ---------------------------------------------------------------- sources
@@ -134,7 +135,9 @@ def openverse_image(query, seed=0):
                 {"q": query, "license": licenses, "size": "large", "aspect_ratio": "wide",
                  "mature": "false", "page_size": 30})
             data = json.loads(urllib.request.urlopen(urllib.request.Request(url, headers=hdr), timeout=30).read())
-            res = [r for r in data.get("results", []) if (r.get("width") or 0) >= 1920 and r.get("url")]
+            allres = data.get("results", [])
+            res = [r for r in allres if (r.get("width") or 0) >= 1920 and r.get("url")]
+            DIAG.append(f"openverse[{licenses}] q={query!r}: {len(allres)} results, {len(res)} wide enough")
             random.Random(seed).shuffle(res)
             for r in res[:6]:
                 try:
@@ -146,9 +149,12 @@ def openverse_image(query, seed=0):
                                                        f"({r.get('license')} {r.get('license_version')})")
                     credit = f"Background: {credit} {r.get('foreign_landing_url') or ''} via Openverse".strip()
                     return img, credit
-                except Exception:
+                except Exception as e:
+                    DIAG.append(f"openverse download failed: {str(e)[:80]}")
                     continue
         except Exception as e:
+            body = getattr(e, "read", lambda: b"")()[:200]
+            DIAG.append(f"openverse[{licenses}] error: {e} {body!r}")
             print(f"[visuals] openverse failed: {e}")
     return None, None
 

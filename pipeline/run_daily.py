@@ -146,7 +146,7 @@ def run(date: dt.date, force_long=False, minutes=None, theme_path=None, deliver=
     # 8. diagnostics committed to the repo (no secrets, safe to publish)
     import os
     report = {"date": date.isoformat(), "title": theme["title"], "scout": manifest["scout_status"],
-              "visual_source": source, "long": long_day, "render_seconds": manifest["render_seconds"],
+              "visual_source": source, "visual_diag": visuals.DIAG[-6:], "long": long_day, "render_seconds": manifest["render_seconds"],
               "delivery": delivery,
               "secrets_present": {k: bool(os.environ.get(k)) for k in (
                   "GEMINI_API_KEY", "INKBOX_API_KEY", "NOTIFY_PHONE", "INKBOX_IDENTITY_ID", "INKBOX_FROM",
