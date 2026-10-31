@@ -24,6 +24,7 @@ import os
 import random
 import re
 import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -154,9 +155,14 @@ def ask_gemini(prompt, api_key, model):
         "tools": [{"google_search": {}}],
         "generationConfig": {"temperature": 1.0},
     }
-    url = GEMINI_URL.format(model=model) + "?key=" + urllib.parse.quote(api_key)
-    req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
-    resp = json.loads(urllib.request.urlopen(req, timeout=120).read())
+    url = GEMINI_URL.format(model=model)
+    req = urllib.request.Request(url, data=json.dumps(body).encode(),
+                                 headers={"Content-Type": "application/json", "x-goog-api-key": api_key})
+    try:
+        resp = json.loads(urllib.request.urlopen(req, timeout=120).read())
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode(errors="replace")[:400]
+        raise RuntimeError(f"Gemini HTTP {e.code}: {detail}") from None
     parts = resp["candidates"][0]["content"]["parts"]
     text = "".join(p.get("text", "") for p in parts)
     sources = []
@@ -283,7 +289,9 @@ def scout(today=None, geo="US", model=None, attempts=3):
     model = model or os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
     if not key:
         print("[scout] no GEMINI_API_KEY, using offline seasonal theme", file=sys.stderr)
-        return sanitize(offline_theme(cal, history), photos)
+        t = sanitize(offline_theme(cal, history), photos)
+        t["scout_status"] = "fallback: GEMINI_API_KEY missing"
+        return t
 
     trends = fetch_trends(geo)
     trend_txt = "\n".join(f"- {t['query']} ({t['traffic']}): {' / '.join(t['news'])}" for t in trends) or "(unavailable)"
@@ -303,13 +311,16 @@ def scout(today=None, geo="US", model=None, attempts=3):
                 last_err = f"duplicate of {dup}"
                 continue
             theme["sources"] = sources
+            theme["scout_status"] = f"ok: gemini ({model}), {len(trends)} trends read"
             theme["trends_seen"] = [t["query"] for t in trends[:10]]
             return theme
         except Exception as e:
-            last_err = e
-            print(f"[scout] attempt {i+1} failed: {e}", file=sys.stderr)
+            last_err = str(e).replace(key, "***")
+            print(f"[scout] attempt {i+1} failed: {last_err}", file=sys.stderr)
     print(f"[scout] falling back to offline theme ({last_err})", file=sys.stderr)
-    return sanitize(offline_theme(cal, history), photos)
+    t = sanitize(offline_theme(cal, history), photos)
+    t["scout_status"] = f"fallback: {last_err} | trends read: {len(trends)}"
+    return t
 
 
 def main():

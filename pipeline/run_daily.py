@@ -73,6 +73,7 @@ def run(date: dt.date, force_long=False, minutes=None, theme_path=None, deliver=
     graded = visuals.grade(img, pal)
 
     manifest = {"date": date.isoformat(), "title": theme["title"], "hook": theme.get("hook"),
+                "scout_status": theme.get("scout_status", "theme file"),
                 "visual_source": source, "credit": credit, "files": {}}
 
     # 3. long video
@@ -137,9 +138,21 @@ def run(date: dt.date, force_long=False, minutes=None, theme_path=None, deliver=
     hist_path.write_text(json.dumps(hist[-200:], indent=1, ensure_ascii=False))
 
     # 7. deliver
+    delivery = {}
     if deliver:
         from publish import deliver as dl
-        dl.deliver(out, manifest, CONFIG)
+        delivery = dl.deliver(out, manifest, CONFIG) or {}
+
+    # 8. diagnostics committed to the repo (no secrets, safe to publish)
+    import os
+    report = {"date": date.isoformat(), "title": theme["title"], "scout": manifest["scout_status"],
+              "visual_source": source, "long": long_day, "render_seconds": manifest["render_seconds"],
+              "delivery": delivery,
+              "secrets_present": {k: bool(os.environ.get(k)) for k in (
+                  "GEMINI_API_KEY", "INKBOX_API_KEY", "NOTIFY_PHONE", "INKBOX_IDENTITY_ID", "INKBOX_FROM",
+                  "NOTIFY_TO", "UNSPLASH_ACCESS_KEY", "PEXELS_API_KEY")}}
+    (ROOT / "data" / "last_run.json").write_text(json.dumps(report, indent=1, ensure_ascii=False))
+    print(json.dumps(report, indent=1, ensure_ascii=False))
     return out, manifest
 
 

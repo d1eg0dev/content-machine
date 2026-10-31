@@ -63,7 +63,7 @@ def send_inkbox(subject, text, body_html, attachments=None):
     key, sender, to = (os.environ.get(k) for k in ("INKBOX_API_KEY", "INKBOX_FROM", "NOTIFY_TO"))
     if not (key and sender and to):
         print("[deliver] Inkbox not configured (INKBOX_API_KEY / INKBOX_FROM / NOTIFY_TO), skipping")
-        return
+        return "skipped: INKBOX_FROM or NOTIFY_TO missing"
     body = {"recipients": {"to": [a.strip() for a in to.split(",")]}, "subject": subject[:990],
             "body_text": text, "body_html": body_html, "attachments": attachments or []}
     req = urllib.request.Request(INKBOX_URL.format(mailbox=urllib.parse.quote(sender)),
@@ -72,6 +72,7 @@ def send_inkbox(subject, text, body_html, attachments=None):
                                           "Idempotency-Key": subject[:200] + (os.environ.get("GITHUB_RUN_ID") or "")})
     resp = urllib.request.urlopen(req, timeout=60)
     print(f"[deliver] email sent to {to} ({resp.status})")
+    return f"ok: {resp.status}"
 
 
 def phone_text(manifest: dict, uploaded: dict | None):
@@ -93,7 +94,7 @@ def send_imessage(text):
     key, phone = os.environ.get("INKBOX_API_KEY"), os.environ.get("NOTIFY_PHONE")
     if not (key and phone):
         print("[deliver] phone message not configured (INKBOX_API_KEY / NOTIFY_PHONE), skipping")
-        return
+        return "skipped: INKBOX_API_KEY or NOTIFY_PHONE missing"
     url = IMESSAGE_URL
     if os.environ.get("INKBOX_IDENTITY_ID"):
         url += "?agent_identity_id=" + urllib.parse.quote(os.environ["INKBOX_IDENTITY_ID"])
@@ -102,6 +103,7 @@ def send_imessage(text):
     resp = json.loads(urllib.request.urlopen(req, timeout=60).read())
     msg = resp.get("message", resp)
     print(f"[deliver] message to {phone}: {msg.get('status', 'sent')}")
+    return f"ok: {msg.get('status', 'sent')}"
 
 
 def deliver(out: Path, manifest: dict, config: dict):
@@ -110,11 +112,13 @@ def deliver(out: Path, manifest: dict, config: dict):
         from publish import youtube_upload
         uploaded = youtube_upload.upload_all(out, manifest, config)
         (out / "uploaded.json").write_text(json.dumps(uploaded, indent=2))
+    status = {}
     try:
-        send_imessage(phone_text(manifest, uploaded))
+        status["phone"] = send_imessage(phone_text(manifest, uploaded))
     except Exception as e:  # never fail the run because of a notification
         body = getattr(e, "read", lambda: b"")()
-        print(f"[deliver] phone message failed: {e} {body[:300]!r}")
+        status["phone"] = f"failed: {e} {body[:300].decode(errors='replace')}"
+        print(f"[deliver] phone message {status['phone']}")
     try:
         subject, text, body_html = build_email(manifest, uploaded)
         atts = []
@@ -122,7 +126,9 @@ def deliver(out: Path, manifest: dict, config: dict):
         if thumb.exists():
             atts.append({"filename": "thumbnail.jpg", "content_type": "image/jpeg",
                          "content_base64": base64.b64encode(thumb.read_bytes()).decode()})
-        send_inkbox(subject, text, body_html, atts)
+        status["email"] = send_inkbox(subject, text, body_html, atts)
     except Exception as e:  # never fail the run because of a notification
         body = getattr(e, "read", lambda: b"")()
-        print(f"[deliver] email failed: {e} {body[:300]!r}")
+        status["email"] = f"failed: {e} {body[:300].decode(errors='replace')}"
+        print(f"[deliver] email {status['email']}")
+    return status
