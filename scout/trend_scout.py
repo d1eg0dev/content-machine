@@ -286,7 +286,10 @@ def scout(today=None, geo="US", model=None, attempts=3):
     history = load_history()
     photos = list_photos()
     key = os.environ.get("GEMINI_API_KEY")
-    model = model or os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+    # empty GitHub variables arrive as "", so treat blank as unset; fall back across models
+    models = [m for m in [model, (os.environ.get("GEMINI_MODEL") or "").strip(),
+                          "gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-flash-lite"] if m]
+    models = list(dict.fromkeys(models))
     if not key:
         print("[scout] no GEMINI_API_KEY, using offline seasonal theme", file=sys.stderr)
         t = sanitize(offline_theme(cal, history), photos)
@@ -301,7 +304,8 @@ def scout(today=None, geo="US", model=None, attempts=3):
                            photos=json.dumps(photos) if photos else "(none)",
                            keys=KEYS, modes=MODES, layers=LAYERS)
     last_err = None
-    for i in range(attempts):
+    for i in range(attempts + len(models) - 1):
+        model = models[0]
         try:
             text, sources = ask_gemini(prompt, key, model)
             theme = sanitize(extract_json(text), photos)
@@ -315,8 +319,10 @@ def scout(today=None, geo="US", model=None, attempts=3):
             theme["trends_seen"] = [t["query"] for t in trends[:10]]
             return theme
         except Exception as e:
-            last_err = str(e).replace(key, "***")
+            last_err = f"{model}: " + str(e).replace(key, "***")
             print(f"[scout] attempt {i+1} failed: {last_err}", file=sys.stderr)
+            if "HTTP 404" in str(e) and len(models) > 1:   # model retired/unknown -> try the next one
+                models.pop(0)
     print(f"[scout] falling back to offline theme ({last_err})", file=sys.stderr)
     t = sanitize(offline_theme(cal, history), photos)
     t["scout_status"] = f"fallback: {last_err} | trends read: {len(trends)}"
