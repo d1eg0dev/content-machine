@@ -64,5 +64,27 @@
     "binaural": 0.0
    }
   }
+ },
+ {
+  "date": "2026-10-31",
+  "title": "Snowy Cabin Fireplace | 1 Hour Deep Sleep Ambient",
+  "long": true,
+  "music": {
+   "key": "E",
+   "mode": "dorian",
+   "layers": {
+    "pad": 0.6,
+    "drone": 0,
+    "bowls": 0,
+    "bells": 0.2,
+    "brown": 0,
+    "rain": 0,
+    "ocean": 0,
+    "wind": 0.3,
+    "fire": 0.5,
+    "birds": 0,
+    "binaural": 0.0
+   }
+  }
  }
 ]

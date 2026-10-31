@@ -1,10 +1,10 @@
 {
  "date": "2026-10-31",
- "title": "Ocean Waves Under the Stars | 1 Hour Deep Sleep Ambient",
- "scout": "fallback: gemini-flash-latest: Gemini HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \",\n    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/google.rpc | trends read: 10",
+ "title": "Snowy Cabin Fireplace | 1 Hour Deep Sleep Ambient",
+ "scout": "fallback: gemini-3.7-flash: Gemini HTTP 429: { \"error\": { \"code\": 429, \"message\": \"You exceeded your current quota, please check your plan and billi || gemini-3.8-flash: Gemini HTTP 429: { \"error\": { \"code\": 429, \"message\": \"You exceeded your current quota, please check your plan and billi || gemini-flash-latest: Gemini HTTP 429: { \"error\": { \"code\": 429, \"message\": \"You exceeded your current quota, please check your plan and billi || gemini-2.5-flash/nosearch: Gemini HTTP 404: { \"error\": { \"code\": 404, \"message\": \"This model models/gemini-2.5-flash is no longer available to new  || gemini-3.5-flash/nosearch: no JSON in model output || gemini-3.6-flash/nosearch: no JSON in model output | available: ['gemini-2.5-flash', 'gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-omni-1.1-flash', 'gemini-3-flash-preview'] | trends read: 10",
  "visual_source": "procedural",
  "long": true,
- "render_seconds": 204,
+ "render_seconds": 335,
  "delivery": {
   "phone": "skipped: INKBOX_API_KEY or NOTIFY_PHONE missing",
   "email": "skipped: INKBOX_FROM or NOTIFY_TO missing"
