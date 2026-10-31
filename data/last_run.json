@@ -1,14 +1,14 @@
 {
  "date": "2026-10-31",
- "title": "Halloween Rain at Night | Dark Cozy Sleep Ambient (1 Hour)",
- "scout": "ok: gemini-3.6-flash (no search grounding), 10 trends read",
+ "title": "Autumn Fog & Distant Rain | Cozy Focus & Study Ambient (1 Hour)",
+ "scout": "ok: gemini-3.5-flash (no search grounding), 10 trends read",
  "visual_source": "procedural",
  "visual_diag": [
-  "openverse[cc0,pdm] error: HTTP Error 401: Unauthorized b'{\"detail\":\"page_size may not exceed 20 for anonymous requests\"}'",
-  "openverse[by] error: HTTP Error 401: Unauthorized b'{\"detail\":\"page_size may not exceed 20 for anonymous requests\"}'"
+  "openverse[cc0,pdm] q='foggy autumn forest cabin': 0 results, 0 wide enough",
+  "openverse[by] q='foggy autumn forest cabin': 0 results, 0 wide enough"
  ],
  "long": true,
- "render_seconds": 288,
+ "render_seconds": 350,
  "delivery": {
   "phone": "ok: pending via edmond-claude (imessage=False, phone=False)",
   "email": "skipped: INKBOX_FROM or NOTIFY_TO missing"

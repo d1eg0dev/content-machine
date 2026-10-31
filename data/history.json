@@ -42,5 +42,27 @@
     "binaural": 0.0
    }
   }
+ },
+ {
+  "date": "2026-10-31",
+  "title": "Autumn Fog & Distant Rain | Cozy Focus & Study Ambient (1 Hour)",
+  "long": true,
+  "music": {
+   "key": "A",
+   "mode": "dorian",
+   "layers": {
+    "pad": 0.6,
+    "drone": 0.4,
+    "bowls": 0,
+    "bells": 0.15,
+    "brown": 0.3,
+    "rain": 0.5,
+    "ocean": 0,
+    "wind": 0.35,
+    "fire": 0,
+    "birds": 0,
+    "binaural": 0.0
+   }
+  }
  }
 ]
