@@ -86,5 +86,27 @@
     "binaural": 0.0
    }
   }
+ },
+ {
+  "date": "2026-10-31",
+  "title": "Candlelit Altar Night | 1 Hour Día de Muertos Deep Sleep Ambient",
+  "long": true,
+  "music": {
+   "key": "G",
+   "mode": "phrygian",
+   "layers": {
+    "pad": 0.55,
+    "drone": 0.4,
+    "bowls": 0.25,
+    "bells": 0,
+    "brown": 0,
+    "rain": 0,
+    "ocean": 0,
+    "wind": 0.15,
+    "fire": 0.2,
+    "birds": 0,
+    "binaural": 0.0
+   }
+  }
  }
 ]
