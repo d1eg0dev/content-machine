@@ -133,7 +133,7 @@ def openverse_image(query, seed=0):
         try:
             url = "https://api.openverse.org/v1/images/?" + urllib.parse.urlencode(
                 {"q": query, "license": licenses, "size": "large", "aspect_ratio": "wide",
-                 "mature": "false", "page_size": 30})
+                 "mature": "false", "page_size": 20})
             data = json.loads(urllib.request.urlopen(urllib.request.Request(url, headers=hdr), timeout=30).read())
             allres = data.get("results", [])
             res = [r for r in allres if (r.get("width") or 0) >= 1920 and r.get("url")]
