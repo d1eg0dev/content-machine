@@ -1,0 +1,14 @@
+{
+  "long_video_days": ["Mon", "Wed", "Fri", "Sun"],
+  "shorts_per_day": 2,
+  "short_seconds": 45,
+  "loop_seconds": 30,
+  "upload_mode": "artifact",
+  "youtube_privacy": "private",
+  "youtube_publish_delay_hours": null,
+  "youtube_category_id": "10",
+  "short_cta_long": "Full 1-hour version on the channel",
+  "short_cta_channel": "More soundscapes on the channel",
+  "short_description": "Original soundscape generated from code. Full versions on the channel. #ambient #sleep #relax",
+  "description_footer": "🎧 About this soundscape\nEvery sound in this {minutes}-minute video is synthesized from code by Eyes of Diego: no samples, no loops, no AI music model. The music never repeats.\n\nSubscribe for a new soundscape every few days."
+}

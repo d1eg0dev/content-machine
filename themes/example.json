@@ -1,0 +1,9 @@
+{
+  "title": "Rain on a Mountain Cabin - Deep Sleep Ambient",
+  "music": {
+    "key": "D", "mode": "dorian", "duration_min": 60,
+    "brightness": 0.35, "lowpass_hz": 8000,
+    "reverb": {"seconds": 8.0, "mix": 0.5},
+    "layers": {"pad": 0.8, "drone": 0.5, "bowls": 0.35, "bells": 0.25, "rain": 0.55, "wind": 0.15}
+  }
+}

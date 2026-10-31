@@ -1,0 +1,76 @@
+name: Daily content
+
+on:
+  schedule:
+    # 05:17 UTC = 06:17 Madrid (winter). Ready when you wake up.
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+    inputs:
+      long:
+        description: "Force a long video today"
+        type: boolean
+        default: false
+      minutes:
+        description: "Long video length in minutes (empty = theme default, e.g. 3 for a test)"
+        required: false
+      theme:
+        description: "Path to a theme JSON to skip the scout (e.g. themes/example.json)"
+        required: false
+
+permissions:
+  contents: write   # to commit data/history.json back
+
+concurrency:
+  group: daily-content
+  cancel-in-progress: false
+
+jobs:
+  produce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install ffmpeg + deps
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          pip install -r requirements.txt
+
+      - name: Produce today's content
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+        run: |
+          ARGS=""
+          if [ "${{ inputs.long }}" = "true" ]; then ARGS="$ARGS --long"; fi
+          if [ -n "${{ inputs.minutes }}" ]; then ARGS="$ARGS --minutes ${{ inputs.minutes }}"; fi
+          if [ -n "${{ inputs.theme }}" ]; then ARGS="$ARGS --theme ${{ inputs.theme }}"; fi
+          python -m pipeline.run_daily $ARGS
+          echo "OUT_DIR=$(ls -d out/*/ | tail -1)" >> "$GITHUB_ENV"
+
+      - name: Upload videos (download from this run's page)
+        uses: actions/upload-artifact@v4
+        with:
+          name: content-${{ github.run_number }}
+          path: ${{ env.OUT_DIR }}
+          retention-days: 7
+          compression-level: 0
+
+      - name: Save history (so the scout never repeats)
+        run: |
+          git config user.name "content-machine"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/history.json
+          git commit -m "history: $(date -u +%F)" || echo "nothing to commit"
+          git push
