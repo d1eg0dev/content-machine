@@ -20,5 +20,27 @@
     "binaural": 0.0
    }
   }
+ },
+ {
+  "date": "2026-10-31",
+  "title": "Halloween Rain at Night | Dark Cozy Sleep Ambient (1 Hour)",
+  "long": true,
+  "music": {
+   "key": "D",
+   "mode": "phrygian",
+   "layers": {
+    "pad": 0.6,
+    "drone": 0.7,
+    "bowls": 0,
+    "bells": 0,
+    "brown": 0.35,
+    "rain": 0.8,
+    "ocean": 0,
+    "wind": 0.25,
+    "fire": 0,
+    "birds": 0,
+    "binaural": 0.0
+   }
+  }
  }
 ]
