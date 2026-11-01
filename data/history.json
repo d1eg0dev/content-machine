@@ -86,5 +86,27 @@
     "binaural": 0.0
    }
   }
+ },
+ {
+  "date": "2026-11-01",
+  "title": "Lake Pátzcuaro Twilight | Warm Día de Muertos Sleep & Relax (1 Hour)",
+  "long": true,
+  "music": {
+   "key": "Eb",
+   "mode": "lydian",
+   "layers": {
+    "pad": 0.75,
+    "drone": 0.6,
+    "bowls": 0.3,
+    "bells": 0.2,
+    "brown": 0.35,
+    "rain": 0,
+    "ocean": 0,
+    "wind": 0.25,
+    "fire": 0,
+    "birds": 0,
+    "binaural": 0.0
+   }
+  }
  }
 ]
