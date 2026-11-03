@@ -608,7 +608,7 @@ def calibrate_gain(theme, target_dbfs=-20.0, probe_s=90):
     return 10 ** (target_dbfs / 20) / rms
 
 
-def render(theme: dict, out_path: str, minutes: float | None = None, bitrate="256k", verbose=True):
+def render(theme: dict, out_path: str, minutes: float | None = None, bitrate="192k", verbose=True):
     th = deep_merge(DEFAULT_THEME, theme)
     total = 60.0 * (minutes if minutes is not None else th["duration_min"])
     gain = calibrate_gain(th)

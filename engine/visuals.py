@@ -243,7 +243,7 @@ def grade(img, palette=None, darken=0.9, vignette=0.5, strength=1.0, seed=0):
     d = np.sqrt(((xx - w / 2) / (w / 2)) ** 2 + ((yy - h / 2) / (h / 2)) ** 2)
     a *= (1 - vignette * np.clip(d - 0.35, 0, 1) ** 1.5)[..., None]
     rng = np.random.default_rng(seed)
-    a += rng.normal(0, 0.018 * k, (h, w, 1)).astype(np.float32)    # luminance grain
+    a += rng.normal(0, 0.007 * k, (h, w, 1)).astype(np.float32)    # luminance grain
     return Image.fromarray((np.clip(a, 0, 1) * 255).astype(np.uint8))
 
 
@@ -294,7 +294,7 @@ def ffmpeg_writer(out, w, h, fps=FPS, crf=22, extra=None):
 
 
 def render_motion(img, out, w, h, seconds, zoom=0.07, seed=0, particles=True, overlay=None,
-                  extra_ffmpeg=None, loop_period=None):
+                  extra_ffmpeg=None, loop_period=None, crf=22):
     """Breathing zoom + parallax drift + particles. Periodic in loop_period (defaults to seconds)."""
     T = loop_period or seconds
     over = 1 + zoom + 0.02
@@ -303,7 +303,7 @@ def render_motion(img, out, w, h, seconds, zoom=0.07, seed=0, particles=True, ov
     rng = np.random.default_rng(seed)
     px, py = rng.uniform(0, 2 * np.pi, 2)
     parts = Particles(w, h, T, seed=seed) if particles else None
-    proc = ffmpeg_writer(out, w, h, extra=extra_ffmpeg)
+    proc = ffmpeg_writer(out, w, h, crf=crf, extra=extra_ffmpeg)
     n = int(round(seconds * FPS))
     for i in range(n):
         t = i / FPS
@@ -331,7 +331,17 @@ def render_motion(img, out, w, h, seconds, zoom=0.07, seed=0, particles=True, ov
 
 
 def render_loop(img, out, w=1920, h=1080, seconds=30, seed=0):
-    return render_motion(img, out, w, h, seconds, seed=seed)
+    """Render the loop at high quality, then compress it hard with 10-bit HEVC.
+    The loop is only ~30 s, so a slow encoder is cheap, and the hour-long video is a stream copy
+    of it: ~200-450 MB per hour instead of ~1.1 GB, with no visible loss (10-bit avoids banding)."""
+    tmp = str(Path(out).with_suffix(".hq.mp4"))
+    render_motion(img, tmp, w, h, seconds, seed=seed, crf=14)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", tmp, "-c:v", "libx265", "-preset", "slow",
+                    "-crf", "26", "-pix_fmt", "yuv420p10le", "-tag:v", "hvc1",
+                    "-x265-params", f"log-level=error:aq-mode=3:keyint={FPS * 2}", "-an",
+                    "-movflags", "+faststart", out], check=True)
+    os.remove(tmp)
+    return out
 
 
 def assemble_long(loop_mp4, audio, out, duration_s):
