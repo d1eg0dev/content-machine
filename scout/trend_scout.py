@@ -331,6 +331,7 @@ def scout(today=None, geo="US", model=None, attempts=3):
     # grounding first on the top 2 models; then every model without grounding (Trends RSS still gives fresh context)
     plan = [(m, True) for m in models[:2]] + [(m, False) for m in models]
     dup_retries = 0
+    busy_retries = 0
     i = 0
     while i < len(plan):
         model, search = plan[i]
@@ -355,6 +356,12 @@ def scout(today=None, geo="US", model=None, attempts=3):
                 short += " [" + ", ".join(f"{k}={v}" for k, v in q[:4]) + "]"
             errors.append(f"{model}{'' if search else '/nosearch'}: {short}")
             print(f"[scout] {errors[-1]}", file=sys.stderr)
+            transient = any(x in msg for x in ("HTTP 503", "HTTP 500", "HTTP 429", "timed out", "high demand"))
+            if transient and not search and busy_retries < 6:
+                busy_retries += 1
+                import time
+                time.sleep(min(90, 15 * busy_retries))   # Gemini overloaded: wait and retry the same model
+                continue
             i += 1
     last_err = " || ".join(errors[-6:]) + f" | available: {available[:8]}"
     print(f"[scout] falling back to offline theme ({last_err})", file=sys.stderr)

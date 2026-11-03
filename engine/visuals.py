@@ -129,10 +129,15 @@ def openverse_image(query, seed=0):
         return None, None
     words = query.split()
     tries = list(dict.fromkeys([" ".join(words), " ".join(words[-2:]), " ".join(words[:2]), words[-1]]))
-    for q in tries:
-        img, credit = _openverse_query(q, seed)
-        if img is not None:
-            return img, credit
+    import time
+    for attempt in range(3):                     # Openverse is sometimes slow or returns 500
+        for q in tries:
+            img, credit = _openverse_query(q, seed)
+            if img is not None:
+                return img, credit
+        if not any(("500" in d or "timed out" in d) for d in DIAG[-4:]):
+            break                                # no server trouble: simply no matching image
+        time.sleep(20 * (attempt + 1))
     return None, None
 
 
@@ -147,7 +152,7 @@ def _openverse_query(query, seed=0):
             url = "https://api.openverse.org/v1/images/?" + urllib.parse.urlencode(
                 {"q": query, "license": licenses, "size": "large", "aspect_ratio": "wide",
                  "mature": "false", "page_size": 20})
-            data = json.loads(urllib.request.urlopen(urllib.request.Request(url, headers=hdr), timeout=30).read())
+            data = json.loads(urllib.request.urlopen(urllib.request.Request(url, headers=hdr), timeout=60).read())
             allres = data.get("results", [])
             res = [r for r in allres if (r.get("width") or 0) >= 1920 and r.get("url")]
             DIAG.append(f"openverse[{licenses}] q={query!r}: {len(allres)} results, {len(res)} wide enough")
