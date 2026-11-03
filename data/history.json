@@ -130,5 +130,27 @@
     "binaural": 0.0
    }
   }
+ },
+ {
+  "date": "2026-11-03",
+  "title": "Misty Pine Forest at Dawn | 1 Hour Calm Focus Ambient",
+  "long": false,
+  "music": {
+   "key": "C#",
+   "mode": "lydian",
+   "layers": {
+    "pad": 0.7,
+    "drone": 0,
+    "bowls": 0,
+    "bells": 0.3,
+    "brown": 0,
+    "rain": 0,
+    "ocean": 0,
+    "wind": 0.2,
+    "fire": 0,
+    "birds": 0.4,
+    "binaural": 0.0
+   }
+  }
  }
 ]

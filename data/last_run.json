@@ -1,18 +1,18 @@
 {
- "date": "2026-11-02",
- "title": "Rainy Night in a Mountain Cabin | 1 Hour Deep Sleep Ambient",
- "scout": "fallback: gemini-2.5-flash/nosearch: Gemini HTTP 404: { \"error\": { \"code\": 404, \"message\": \"This model models/gemini-2.5-flash is no longer available to new  || gemini-3.5-flash/nosearch: Gemini HTTP 503: { \"error\": { \"code\": 503, \"message\": \"This model is currently experiencing high demand. Spikes in deman || gemini-3.6-flash/nosearch: Gemini HTTP 503: { \"error\": { \"code\": 503, \"message\": \"This model is currently experiencing high demand. Spikes in deman || gemini-3.7-flash/nosearch: Gemini HTTP 503: { \"error\": { \"code\": 503, \"message\": \"This model is currently experiencing high demand. Spikes in deman || gemini-3.8-flash/nosearch: The read operation timed out || gemini-flash-latest/nosearch: Gemini HTTP 503: { \"error\": { \"code\": 503, \"message\": \"This model is currently experiencing high demand. Spikes in deman | available: ['gemini-2.5-flash', 'gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-omni-1.1-flash', 'gemini-3-flash-preview'] | trends read: 10",
+ "date": "2026-11-03",
+ "title": "Misty Pine Forest at Dawn | 1 Hour Calm Focus Ambient",
+ "scout": "fallback: gemini-2.5-flash/nosearch: Gemini HTTP 404: { \"error\": { \"code\": 404, \"message\": \"This model models/gemini-2.5-flash is no longer available to new  || gemini-3.5-flash/nosearch: Gemini HTTP 503: { \"error\": { \"code\": 503, \"message\": \"This model is currently experiencing high demand. Spikes in deman || gemini-3.6-flash/nosearch: Gemini HTTP 503: { \"error\": { \"code\": 503, \"message\": \"This model is currently experiencing high demand. Spikes in deman || gemini-3.7-flash/nosearch: The read operation timed out || gemini-3.8-flash/nosearch: Gemini HTTP 503: { \"error\": { \"code\": 503, \"message\": \"This model is currently experiencing high demand. Spikes in deman || gemini-flash-latest/nosearch: Gemini HTTP 503: { \"error\": { \"code\": 503, \"message\": \"This model is currently experiencing high demand. Spikes in deman | available: ['gemini-2.5-flash', 'gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-omni-1.1-flash', 'gemini-3-flash-preview'] | trends read: 10",
  "visual_source": "procedural",
  "visual_diag": [
-  "openverse[cc0,pdm] error: The read operation timed out b''",
+  "openverse[cc0,pdm] error: HTTP Error 500: Internal Server Error b'\\n<!doctype html>\\n<html lang=\"en\">\\n<head>\\n  <title>Server Error (500)</title>\\n</head>\\n<body>\\n  <h1>Server Error (500)</h1><p></p>\\n<script>(function(){function c(){var b=a.contentDocument||(a.contentWin'",
   "openverse[by] error: The read operation timed out b''",
   "openverse[cc0,pdm] error: The read operation timed out b''",
-  "openverse[by] error: The read operation timed out b''",
-  "openverse[cc0,pdm] error: The read operation timed out b''",
+  "openverse[by] error: HTTP Error 500: Internal Server Error b'\\n<!doctype html>\\n<html lang=\"en\">\\n<head>\\n  <title>Server Error (500)</title>\\n</head>\\n<body>\\n  <h1>Server Error (500)</h1><p></p>\\n<script>(function(){function c(){var b=a.contentDocument||(a.contentWin'",
+  "openverse[cc0,pdm] error: HTTP Error 500: Internal Server Error b'\\n<!doctype html>\\n<html lang=\"en\">\\n<head>\\n  <title>Server Error (500)</title>\\n</head>\\n<body>\\n  <h1>Server Error (500)</h1><p></p>\\n<script type=\"module\" src=\"https://static.cloudflareinsights.com/beacon'",
   "openverse[by] error: The read operation timed out b''"
  ],
- "long": true,
- "render_seconds": 983,
+ "long": false,
+ "render_seconds": 529,
  "delivery": {
   "phone": "ok: pending via edmond-claude (imessage=False, phone=False)",
   "email": "skipped: INKBOX_FROM or NOTIFY_TO missing"
