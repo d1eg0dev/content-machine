@@ -174,5 +174,27 @@
     "binaural": 0.0
    }
   }
+ },
+ {
+  "date": "2026-11-05",
+  "title": "Autumn Storm at Sea | Ocean Waves & Deep Rain for Sleep (1 Hour)",
+  "long": false,
+  "music": {
+   "key": "Ab",
+   "mode": "dorian",
+   "layers": {
+    "pad": 0.35,
+    "drone": 0.45,
+    "bowls": 0,
+    "bells": 0,
+    "brown": 0.25,
+    "rain": 0.65,
+    "ocean": 0.75,
+    "wind": 0.35,
+    "fire": 0,
+    "birds": 0,
+    "binaural": 0.0
+   }
+  }
  }
 ]

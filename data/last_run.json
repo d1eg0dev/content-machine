@@ -1,18 +1,17 @@
 {
- "date": "2026-11-04",
- "title": "First Snowfall in the Mountains | Deep Sleep & Relaxation Ambient (1 Hour)",
+ "date": "2026-11-05",
+ "title": "Autumn Storm at Sea | Ocean Waves & Deep Rain for Sleep (1 Hour)",
  "scout": "ok: gemini-3.5-flash (no search grounding), 10 trends read",
  "visual_source": "openverse",
  "visual_diag": [
-  "openverse[by] error: HTTP Error 500: Internal Server Error b'\\n<!doctype html>\\n<html lang=\"en\">\\n<head>\\n  <title>Server Error (500)</title>\\n</head>\\n<body>\\n  <h1>Server Error (500)</h1><p></p>\\n<script type=\"module\" src=\"https://static.cloudflareinsights.com/beacon'",
+  "openverse[cc0,pdm] q='stormy coastal ocean night': 0 results, 0 wide enough",
+  "openverse[by] q='stormy coastal ocean night': 0 results, 0 wide enough",
   "openverse[cc0,pdm] error: HTTP Error 500: Internal Server Error b'\\n<!doctype html>\\n<html lang=\"en\">\\n<head>\\n  <title>Server Error (500)</title>\\n</head>\\n<body>\\n  <h1>Server Error (500)</h1><p></p>\\n<script>(function(){function c(){var b=a.contentDocument||(a.contentWin'",
-  "openverse[by] error: HTTP Error 500: Internal Server Error b'\\n<!doctype html>\\n<html lang=\"en\">\\n<head>\\n  <title>Server Error (500)</title>\\n</head>\\n<body>\\n  <h1>Server Error (500)</h1><p></p>\\n<script type=\"module\" src=\"https://static.cloudflareinsights.com/beacon'",
-  "openverse[cc0,pdm] error: HTTP Error 500: Internal Server Error b'\\n<!doctype html>\\n<html lang=\"en\">\\n<head>\\n  <title>Server Error (500)</title>\\n</head>\\n<body>\\n  <h1>Server Error (500)</h1><p></p>\\n<script type=\"module\" src=\"https://static.cloudflareinsights.com/beacon'",
   "openverse[by] error: HTTP Error 500: Internal Server Error b'\\n<!doctype html>\\n<html lang=\"en\">\\n<head>\\n  <title>Server Error (500)</title>\\n</head>\\n<body>\\n  <h1>Server Error (500)</h1><p></p>\\n<script>(function(){function c(){var b=a.contentDocument||(a.contentWin'",
-  "openverse[cc0,pdm] q='winter pine forest snow dusk': 1 results, 1 wide enough"
+  "openverse[cc0,pdm] q='stormy coastal': 2 results, 2 wide enough"
  ],
- "long": true,
- "render_seconds": 1341,
+ "long": false,
+ "render_seconds": 364,
  "delivery": {
   "phone": "ok: pending via edmond-claude (imessage=False, phone=False)",
   "email": "skipped: INKBOX_FROM or NOTIFY_TO missing"
